@@ -49,11 +49,13 @@ func (s *HTTPHandler) radAcct(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&pckt); err != nil {
 		http.Error(w, fmt.Errorf("%w %s", types.ErrHTTPHandler, err).Error(), http.StatusBadRequest)
 		s.metric.Add(types.RadAcctMetricName, []interface{}{s.NodeName, "received", "err", float64(1)}...)
+		log.Errorf("%s %s", types.ErrHTTPHandler, err)
 		return
 	}
 	s.queue.Push(pckt)
 	s.metric.Add(types.RadAcctMetricName, []interface{}{s.NodeName, "received", "ok", float64(1)}...)
 	w.WriteHeader(http.StatusNoContent)
+	log.Debugf("http handler receive: %+v", pckt)
 }
 
 func (s *HTTPHandler) nodeChk(w http.ResponseWriter, r *http.Request) {

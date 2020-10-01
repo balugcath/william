@@ -39,6 +39,7 @@ func (s *SQLProcessRadAcct) Pop(r interface{}) {
 		return
 	}
 	s.metric.Add(types.RadAcctMetricName, []interface{}{s.NodeName, "processed", "ok", float64(1)}...)
+	log.Debugf("sql process rad acct req %+v", string(b))
 }
 
 // SQLProcessUserID ...
@@ -71,4 +72,5 @@ func (s *SQLProcessUserID) Pop(r interface{}) {
 		return
 	}
 	s.metric.Add(types.UserIDMetricName, []interface{}{s.NodeName, "processed", "ok", float64(1)}...)
+	log.Debugf("sql process user_id req %+v", string(b))
 }

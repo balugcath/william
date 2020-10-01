@@ -52,6 +52,7 @@ func (s SQLListenHandler) Start() error {
 				log.Error(err)
 				continue
 			}
+			log.Debugf("sql listen handler receive: %+v", p)
 			s.queue.Push(p)
 			s.metric.Add(types.UserIDMetricName, []interface{}{s.NodeName, "received", "ok", float64(1)}...)
 		}
