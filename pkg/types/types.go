@@ -70,7 +70,7 @@ func (s RadiusAccounting) String() string {
 
 // UserID ...
 type UserID struct {
-	UserID int
+	UserID int `json:"user_id"`
 }
 
 func (s UserID) String() string {
