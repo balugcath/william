@@ -11,6 +11,7 @@ import (
 type Interface interface {
 	Register(kind int, name, help string, opts ...string) *Metric
 	Add(name string, opts ...interface{}) *Metric
+	Set(name string, opts ...interface{}) *Metric
 }
 
 const (

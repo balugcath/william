@@ -1,6 +1,7 @@
 package queue
 
 import (
+	log "github.com/sirupsen/logrus"
 	"hash/fnv"
 	"sync"
 )
@@ -95,6 +96,7 @@ func (s *Queue) Start() *Queue {
 			for {
 				if r := s.q[i].pop(); r != nil {
 					s.Pop(r)
+					log.Debugf("#%d pop:%s", i, r.String())
 				}
 			}
 		}(i)
@@ -108,6 +110,7 @@ func (s *Queue) Push(data Item) {
 	h.Write([]byte(data.String()))
 	i := h.Sum64() % uint64(s.maxWorker)
 	s.q[i].push(data)
+	log.Debugf("#%d push:%s", i, data.String())
 }
 
 // Len ...
