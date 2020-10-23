@@ -6,12 +6,17 @@ import (
 )
 
 const (
-	RadAcctMetricName  = "radius_acct"
-	RadAcctMetricHelp  = "radius accounting packet"
-	UserIDMetricName   = "user_id_req"
-	UserIDMetricHelp   = "user_id request"
+	RadAcctMetricName = "radius_acct"
+	RadAcctMetricHelp = "radius accounting packet count"
+
+	RadAuthMetricName = "radius_auth"
+	RadAuthMetricHelp = "radius auth packet count"
+
+	UserIDMetricName = "user_id"
+	UserIDMetricHelp = "user_id request"
+
 	QueueLenMetricName = "queue_len"
-	QueueLenMetricHelp = "length queue"
+	QueueLenMetricHelp = "request length queue"
 )
 
 var (
@@ -23,6 +28,8 @@ var (
 	ErrHTTPHandler = errors.New("HTTP handler")
 	// ErrSQLProcess ...
 	ErrSQLProcess = errors.New("SQL process")
+	// ErrRadAuthReject ...
+	ErrRadAuthReject = errors.New("auth reject")
 )
 
 const (
@@ -83,6 +90,7 @@ type Config struct {
 
 	DBURI           string `required:"true"`
 	RadAcctSQLQuery string `required:"true"`
+	RadAuthSQLQuery string `required:"true"`
 	UserIDSQLQuery  string `required:"true"`
 	SQLListenChan   string `required:"true"`
 
@@ -90,9 +98,13 @@ type Config struct {
 	RadHTTPToken      string `required:"true"`
 	RadHTTPHeader     string `default:"X-Auth"`
 	RadiusHTTPAcctURL string `default:"/acct"`
+	RadiusHTTPAuthURL string `default:"/auth"`
 
 	AcctCntWorker   int `default:"4"`
+	AuthCntWorker   int `default:"4"`
 	UserIDCntWorker int `default:"4"`
+
+	AuthBuffLen int `default:"256"`
 
 	NodeCheckURL string `default:"/hb"`
 

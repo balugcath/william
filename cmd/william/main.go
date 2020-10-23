@@ -7,9 +7,11 @@ import (
 	"syscall"
 
 	"github.com/balugcath/william/internal/handler"
+	"github.com/balugcath/william/internal/runtime_metric"
 	"github.com/balugcath/william/pkg/metric"
 	"github.com/balugcath/william/pkg/queue"
 	"github.com/balugcath/william/pkg/types"
+	"github.com/balugcath/william/pkg/work_pool"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	_ "github.com/lib/pq"
@@ -43,17 +45,24 @@ func main() {
 		log.Fatal(m.Start())
 	}()
 
-	qRad := queue.NewQueue(c.AcctCntWorker,
+	qRadAcct := queue.NewQueue(c.AcctCntWorker,
 		handler.NewSQLProcessRadAcct(db, c, m),
-	).Start()
-	handler.NewHTTPHandler(c, qRad, m).Start()
-	handler.NewQueueMetric(c, qRad, m, "radius_acct")
+	)
 
 	qUserID := queue.NewQueue(c.UserIDCntWorker,
 		handler.NewSQLProcessUserID(db, c, m),
-	).Start()
+	)
+
+	poolRadAuth, _ := workpool.NewPool(c.UserIDCntWorker, c.AuthBuffLen,
+		handler.NewSQLProcessRadAuth(db, c, m),
+	)
+
+	handler.NewHTTPHandler(c, qRadAcct, poolRadAuth, m).Start()
 	handler.NewSQLListenHandler(c, qUserID, m).Start()
-	handler.NewQueueMetric(c, qUserID, m, "user_id")
+
+	rtmetric.NewRTMetric(c, qRadAcct, m, "radius_acct")
+	rtmetric.NewRTMetric(c, poolRadAuth, m, "radius_auth")
+	rtmetric.NewRTMetric(c, qUserID, m, "user_id")
 
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT, syscall.SIGUSR1)

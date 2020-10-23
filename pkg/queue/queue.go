@@ -1,7 +1,6 @@
 package queue
 
 import (
-	log "github.com/sirupsen/logrus"
 	"hash/fnv"
 	"sync"
 )
@@ -13,11 +12,7 @@ type Item interface {
 
 // Interface ...
 type Interface interface {
-	Push(Item)
-}
-
-type poper interface {
-	Pop(interface{})
+	Do(interface{})
 }
 
 type queue struct {
@@ -72,45 +67,36 @@ func (s *queue) pop() Item {
 type Queue struct {
 	maxWorker int
 	q         []*queue
-	poper
 }
 
 // NewQueue ...
-func NewQueue(maxWorker int, poper poper) *Queue {
+func NewQueue(maxWorker int, req Interface) *Queue {
 	if maxWorker == 0 {
 		return nil
 	}
-	s := Queue{maxWorker: maxWorker, poper: poper}
+	s := Queue{maxWorker: maxWorker}
 
 	for i := 0; i < maxWorker; i++ {
 		s.q = append(s.q, newQueue())
+
+		go func(i int) {
+			for {
+				if r := s.q[i].pop(); r != nil {
+					req.Do(r)
+				}
+			}
+		}(i)
 	}
 
 	return &s
 }
 
-// Start ...
-func (s *Queue) Start() *Queue {
-	for i := 0; i < s.maxWorker; i++ {
-		go func(i int) {
-			for {
-				if r := s.q[i].pop(); r != nil {
-					s.Pop(r)
-					log.Debugf("#%d pop:%s", i, r.String())
-				}
-			}
-		}(i)
-	}
-	return s
-}
-
-// Push ...
-func (s *Queue) Push(data Item) {
+// Handle ...
+func (s *Queue) Handle(data Item) {
 	h := fnv.New64a()
 	h.Write([]byte(data.String()))
 	i := h.Sum64() % uint64(s.maxWorker)
 	s.q[i].push(data)
-	log.Debugf("#%d push:%s", i, data.String())
 }
 
 // Len ...

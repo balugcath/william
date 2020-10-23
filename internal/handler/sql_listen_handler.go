@@ -12,10 +12,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type userIDHandler interface {
+	Handle(queue.Item)
+}
+
 // SQLListenHandler ...
 type SQLListenHandler struct {
 	types.Config
-	queue  queue.Interface
+	userIDHandler
 	metric metric.Interface
 }
 
@@ -25,8 +29,8 @@ const (
 )
 
 // NewSQLListenHandler ...
-func NewSQLListenHandler(c types.Config, q queue.Interface, m metric.Interface) *SQLListenHandler {
-	s := SQLListenHandler{Config: c, queue: q, metric: m}
+func NewSQLListenHandler(c types.Config, userID userIDHandler, m metric.Interface) *SQLListenHandler {
+	s := SQLListenHandler{Config: c, userIDHandler: userID, metric: m}
 	s.metric.Register(metric.CounterVec, types.UserIDMetricName, types.UserIDMetricHelp,
 		[]string{"node", "type", "res"}...)
 	return &s
@@ -53,7 +57,7 @@ func (s SQLListenHandler) Start() error {
 				continue
 			}
 			log.Debugf("sql listen handler receive: %+v", p)
-			s.queue.Push(p)
+			s.userIDHandler.Handle(p)
 			s.metric.Add(types.UserIDMetricName, []interface{}{s.NodeName, "received", "ok", float64(1)}...)
 		}
 

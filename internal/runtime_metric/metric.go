@@ -1,4 +1,4 @@
-package handler
+package rtmetric
 
 import (
 	"time"
@@ -8,26 +8,26 @@ import (
 )
 
 const (
-	reqIntSec = 60 * 5
+	reqIntervalSec = 60 * 5
 )
 
-type qm interface {
+type src interface {
 	Len() int
 }
 
-// QueueMetric ...
-type QueueMetric struct {
+// RTMetric ...
+type RTMetric struct {
 }
 
-// NewQueueMetric ...
-func NewQueueMetric(c types.Config, q qm, m metric.Interface, t string) *QueueMetric {
-	s := QueueMetric{}
+// NewRTMetric ...
+func NewRTMetric(c types.Config, q src, m metric.Interface, t string) *RTMetric {
+	s := RTMetric{}
 	m.Register(metric.GaugeVec, types.QueueLenMetricName, types.QueueLenMetricHelp, []string{"node", "type"}...)
 
 	go func() {
 		for {
 			m.Set(types.QueueLenMetricName, []interface{}{c.NodeName, t, float64(q.Len())}...)
-			time.Sleep(time.Second * reqIntSec)
+			time.Sleep(time.Second * reqIntervalSec)
 		}
 	}()
 
