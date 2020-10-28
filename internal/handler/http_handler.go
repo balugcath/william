@@ -64,22 +64,25 @@ func (s *HTTPHandler) radAuth(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("%s %s", types.ErrHTTPHandler, err)
 		return
 	}
-	log.Debugf("http handler rad auth receive: %+v", body)
+	log.Debugf("http handler rad auth receive: %+v", string(body))
 
 	s.metric.Add(types.RadAuthMetricName, []interface{}{s.NodeName, "received", "ok", float64(1)}...)
 	resp, err := s.radAuthHandler.Handle(string(body))
 	if err != nil {
 		if errors.Is(err, types.ErrRadAuthReject) {
+			log.Debugf("http handler rad auth reject: %+v", string(body))
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(resp.(string)))
 			s.metric.Add(types.RadAuthMetricName, []interface{}{s.NodeName, "reply", "reject", float64(1)}...)
 			return
 		}
+		log.Debugf("http handler rad auth error: %+v", string(body))
 		s.metric.Add(types.RadAuthMetricName, []interface{}{s.NodeName, "reply", "error", float64(1)}...)
 		http.Error(w, fmt.Errorf("%w %s", types.ErrHTTPHandler, err).Error(), http.StatusUnauthorized)
 		log.Errorf("%s %s", types.ErrHTTPHandler, err)
 		return
 	}
+	log.Debugf("http handler rad auth ok: %+v", string(body))
 	s.metric.Add(types.RadAuthMetricName, []interface{}{s.NodeName, "reply", "ok", float64(1)}...)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(resp.(string)))
